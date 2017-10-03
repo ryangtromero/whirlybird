@@ -12,6 +12,7 @@
 
 import rospy
 import time
+import numpy as np
 from whirlybird_msgs.msg import Command
 from whirlybird_msgs.msg import Whirlybird
 from std_msgs.msg import Float32
@@ -41,7 +42,8 @@ class Controller():
         Jy = self.param['Jy']
         Jz = self.param['Jz']
         km = self.param['km']
-
+        kp = self.param['kp']
+        kd = self.param['kd']
 
         # Roll Gains
         self.P_phi_ = 0.0
@@ -100,6 +102,8 @@ class Controller():
         Jy = self.param['Jy']
         Jz = self.param['Jz']
         km = self.param['km']
+        kp = self.param['kp']
+        kd = self.param['kd']
 
         phi = msg.roll
         theta = msg.pitch
@@ -109,10 +113,14 @@ class Controller():
         now = rospy.Time.now()
         dt = (now-self.prev_time).to_sec()
         self.prev_time = now
-        
+
         ##################################
         # Implement your controller here
-
+        #kp = 2.60416
+        #kd = 3.47222
+        F = kp*(self.theta_r - theta) - kd*(theta-self.prev_theta)/dt + (m1*l1-m2*l2)*g*np.cos(theta)/l1
+        left_force = .5*F
+        right_force = .5*F
 
         ##################################
 
@@ -120,20 +128,21 @@ class Controller():
         l_out = left_force/km
         if(l_out < 0):
             l_out = 0
-        elif(l_out > 1.0):
-            l_out = 1.0
+        elif(l_out > 0.7):
+            l_out = 0.7
 
         r_out = right_force/km
         if(r_out < 0):
             r_out = 0
-        elif(r_out > 1.0):
-            r_out = 1.0
+        elif(r_out > 0.7):
+            r_out = 0.7
 
         # Pack up and send command
         command = Command()
         command.left_motor = l_out
         command.right_motor = r_out
         self.command_pub_.publish(command)
+        self.prev_theta = theta
 
 
 if __name__ == '__main__':

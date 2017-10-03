@@ -39,11 +39,8 @@ class WhirlybirdSim():
         rospy.spin()
 
     def command_callback(self, msg):
-<<<<<<< HEAD
-        self.command[0] = msg.left_motor # lab handout parameters expect PWM in range [0,100]
-=======
+
         self.command[0] = msg.left_motor
->>>>>>> a505d33bc378fd57d2fabf0744ae9cc18e4a521e
         self.command[1] = msg.right_motor
 
     def esc_timer_callback(self, event):
@@ -163,35 +160,38 @@ class WhirlybirdSim():
         c = np.zeros((3,1))
         pPpQ = np.zeros((3,1))
         Q = np.zeros((3,1))
-        
-        M[0, 0] = Jx 
-        M[0, 1] = 0 
+
+        M[0, 0] = Jx
+        M[0, 1] = 0
         M[0, 2] = -Jx*stheta
-        M[1, 0] = 0 
+        M[1, 0] = 0
         M[1, 1] = m1*l1**2 + m2*l2**2 + Jy*cphi**2 + Jz*sphi**2
         M[1, 2] = (Jy-Jz)*sphi*cphi*ctheta
         M[2, 0] = -Jx*stheta
         M[2, 1] = (Jy-Jz)*sphi*cphi*ctheta
         M[2, 2] = (m1*l1**2 + m2*l2**2 + Jy*cphi**2 + Jz*sphi**2)*ctheta**2 + Jx*stheta**2
-        
+
         c[0, 0] = -thetad**2*(Jz-Jy)*sphi*cphi + psid**2*(Jz-Jy)*sphi*cphi*ctheta**2 - thetad*psid*ctheta*(Jx-(Jz-Jy)*(cphi**2-sphi**2))
         c[1, 0] = psid**2*stheta*ctheta*(-Jx+m1*l1**2+m2*l2**2+Jy*sphi**2+Jz*cphi**2)-2*phid*thetad*(Jz-Jy)*sphi*cphi - phid*psid*ctheta*(-Jx+(Jz-Jy)*(cphi**2-sphi**2))
         c[2, 0] = thetad**2*(Jz-Jy)*sphi*cphi*stheta - phid*thetad*ctheta*(Jx+(Jz-Jy)*(cphi**2-sphi**2))-2*phid*psid*(Jz-Jy)*ctheta**2*sphi*cphi + 2*thetad*psid*stheta*ctheta*(Jx-m1*l1**2-m2*l2**2-Jy*sphi**2-Jz*cphi**2)
-        
-        pPpQ[0, 0] = 0 
+
+        pPpQ[0, 0] = 0
         pPpQ[1, 0] = (m1*l1-m2*l2)*g*ctheta
         pPpQ[2, 0] = 0
-        
+
         Q[0, 0] = d*(fl - fr)
         Q[1, 0] = l1*(fl + fr)*cphi
         Q[2, 0] = l1*(fl + fr)*ctheta*sphi + d*(fr - fl)*stheta
-        
-        partSol = Q - c - pPpQ 
-        
+
+        partSol = Q - c - pPpQ
+
         Mi = np.linalg.inv(M)
-        
+
         xdot[3:] = Mi.dot(partSol)
-        
+
+        xdot[0] = 0
+        xdot[2] = 0
+
         ################################################
 
         return xdot
@@ -206,7 +206,7 @@ class WhirlybirdSim():
         psi = self.state[2]
 
         # accelerometer
-        accel = np.zeros((3,1)) 
+        accel = np.zeros((3,1))
 
         # rate gyro
         B = np.zeros((3,3))
@@ -217,7 +217,7 @@ class WhirlybirdSim():
         B[2,1] = -np.sin(phi)
         B[2,2] = np.cos(phi)*np.cos(theta)
 
-        gyro = B.dot(self.state[3:6]) 
+        gyro = B.dot(self.state[3:6])
         return (accel, gyro)
 
     def sat(x, max, min):
