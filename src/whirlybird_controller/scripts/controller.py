@@ -42,8 +42,17 @@ class Controller():
         Jy = self.param['Jy']
         Jz = self.param['Jz']
         km = self.param['km']
-        kp = self.param['kp']
-        kd = self.param['kd']
+        t_r_theta = self.param['t_r_theta']
+        zeta_theta = self.param['zeta_theta']
+        t_r_phi = self.param['t_r_phi']
+        zeta_phi = self.param['zeta_phi']
+        self.t_r_psi = self.param['t_r_psi']
+        self.zeta_psi = self.param['t_r_psi']
+        self.kd_theta = 2.2*zeta_theta/(t_r_theta*1.152)
+        self.kp_theta = 2.2**2/(t_r_theta**2*1.152)
+        self.kp_phi = (2.2/t_r_phi)**2*Jx
+        self.kd_phi = (4.4*zeta_phi*Jx)/t_r_phi
+
 
         # Roll Gains
         self.P_phi_ = 0.0
@@ -102,12 +111,22 @@ class Controller():
         Jy = self.param['Jy']
         Jz = self.param['Jz']
         km = self.param['km']
-        kp = self.param['kp']
-        kd = self.param['kd']
+        kd_theta = self.kd_theta
+        kp_theta = self.kp_theta
+        kd_phi = self.kd_phi
+        kp_phi = self.kp_phi
 
         phi = msg.roll
         theta = msg.pitch
         psi = msg.yaw
+
+        #Calculate yaw gains
+        t_r_psi = self.t_r_psi
+        zeta_psi = self.zeta_psi
+        Fe = (m1*l1-m2*l2)*g*np.cos(theta)/l1
+        b_psi = (l1*Fe)/(m1*l1**2+m2*l2**2+Jz)
+        kp_psi = (2.2/t_r_psi)**2/b_psi
+        kd_psi = (4.4*zeta_psi)/(b_psi*t_r_psi)
 
         # Calculate dt (This is variable)
         now = rospy.Time.now()
@@ -118,9 +137,13 @@ class Controller():
         # Implement your controller here
         #kp = 2.60416
         #kd = 3.47222
-        F = kp*(self.theta_r - theta) - kd*(theta-self.prev_theta)/dt + (m1*l1-m2*l2)*g*np.cos(theta)/l1
-        left_force = .5*F
-        right_force = .5*F
+        F = kp_theta*(self.theta_r - theta) - kd_theta*(theta-self.prev_theta)/dt + Fe
+
+        phi_c = kp_psi*(self.psi_r-psi) - kd_psi*(psi-self.prev_psi)/dt
+        tau = kp_phi*(phi_c-phi) - kd_phi*(phi-self.prev_phi)/dt
+
+        left_force = .5*F + 1/(2*d)*tau
+        right_force = .5*F - 1/(2*d)*tau
 
         ##################################
 
@@ -143,6 +166,8 @@ class Controller():
         command.right_motor = r_out
         self.command_pub_.publish(command)
         self.prev_theta = theta
+        self.prev_phi = phi
+        self.prev_psi = psi
 
 
 if __name__ == '__main__':

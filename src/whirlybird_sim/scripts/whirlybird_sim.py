@@ -189,8 +189,6 @@ class WhirlybirdSim():
 
         xdot[3:] = Mi.dot(partSol)
 
-        xdot[0] = 0
-        xdot[2] = 0
 
         ################################################
 
