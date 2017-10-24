@@ -35,6 +35,22 @@ class WhirlybirdSim():
         dynamics_rate = rospy.get_param('~rate', 150)
         rospy.Timer(rospy.Duration(1.0/dynamics_rate), self.dynamics_timer_callback)
 
+        l= .9
+        h = 1.1
+
+        self.g  = self.param['g']
+        self.l1 = np.random.uniform(low=l, high=h)*self.param['l1']
+        self.l2 = np.random.uniform(low=l, high=h)*self.param['l2']
+        self.m1 = np.random.uniform(low=l, high=h)*self.param['m1']
+        self.m2 = np.random.uniform(low=l, high=h)*self.param['m2']
+        self.d  = np.random.uniform(low=l, high=h)*self.param['d']
+        self.h  = np.random.uniform(low=l, high=h)*self.param['h']
+        self.r  = np.random.uniform(low=l, high=h)*self.param['r']
+        self.Jx = np.random.uniform(low=l, high=h)*self.param['Jx']
+        self.Jy = np.random.uniform(low=l, high=h)*self.param['Jy']
+        self.Jz = np.random.uniform(low=l, high=h)*self.param['Jz']
+        self.km = self.param['km']
+
         # spin
         rospy.spin()
 
@@ -117,18 +133,18 @@ class WhirlybirdSim():
 
     def dynamics(self, state, command):
         # Get parameters of ros param server
-        g  = self.param['g']
-        l1 = self.param['l1']
-        l2 = self.param['l2']
-        m1 = self.param['m1']
-        m2 = self.param['m2']
-        d  = self.param['d']
-        h  = self.param['h']
-        r  = self.param['r']
-        Jx = self.param['Jx']
-        Jy = self.param['Jy']
-        Jz = self.param['Jz']
-        km = self.param['km']
+        g  = self.g 
+        l1 = self.l1
+        l2 = self.l2
+        m1 = self.m1
+        m2 = self.m2
+        d  = self.d 
+        h  = self.h 
+        r  = self.r 
+        Jx = self.Jx
+        Jy = self.Jy
+        Jz = self.Jz
+        km = self.km
 
         phi = state[0]
         theta = state[1]
