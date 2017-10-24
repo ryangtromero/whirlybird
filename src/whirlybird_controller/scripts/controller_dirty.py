@@ -59,8 +59,6 @@ class Controller():
         self.I_phi_ = 0.0
         self.D_phi_ = 0.0
         self.Int_phi = 0.0
-        self.prev_phi_error = 0.0
-        self.Ui_phi_prev = 0.0
         self.prev_phi = 0.0
 
         # Pitch Gains
@@ -69,10 +67,8 @@ class Controller():
         self.I_theta_ = 0.0
         self.D_theta_ = 0.0
         self.prev_theta = 0.0
-        self.prev_theta_error = 0.0
-        self.Ui_theta_prev = 0.0
         self.Int_theta = 0.0
-        self.Ui_theta = 0.0
+
 
         # Yaw Gains
         self.psi_r = 0.0
@@ -80,10 +76,7 @@ class Controller():
         self.I_psi_ = 0.0
         self.D_psi_ = 0.0
         self.prev_psi = 0.0
-        self.prev_psi_error = 0.0
-        self.Ui_psi_prev = 0.0
         self.Int_psi = 0.0
-        self.Ui_psi = 0.0
 
         self.prev_time = rospy.Time.now()
 
@@ -119,8 +112,6 @@ class Controller():
         Jy = self.param['Jy']
         Jz = self.param['Jz']
         km = self.param['km']
-        ki_theta = self.param['kitheta']
-        ki_psi = self.param['kipsi']
         kd_theta = self.kd_theta
         kp_theta = self.kp_theta
         kd_phi = self.kd_phi
@@ -134,8 +125,7 @@ class Controller():
         t_r_psi = self.t_r_psi
         zeta_psi = self.zeta_psi
         Fe = (m1*l1-m2*l2)*g*np.cos(theta)/l1
-        Fe_new = (m1*l1-m2*l2)*g*np.cos(0)/l1
-        b_psi = (l1*Fe_new)/(m1*l1**2+m2*l2**2+Jz)
+        b_psi = (l1*Fe)/(m1*l1**2+m2*l2**2+Jz)
         kp_psi = (2.2/t_r_psi)**2/b_psi
         kd_psi = (4.4*zeta_psi)/(b_psi*t_r_psi)
 
@@ -144,40 +134,24 @@ class Controller():
         dt = (now-self.prev_time).to_sec()
         self.prev_time = now
 
-        theta_dot = (theta-self.prev_theta)/dt
-        psi_dot = (psi-self.prev_psi)/dt
-        phi_dot = (phi-self.prev_phi)/dt
-
-        # calculate the integral gains
-        # calculate the theta integral gain
-        if np.abs(theta_dot) < 0.1:
-            self.Ui_theta = self.Ui_theta_prev + dt/2 *((self.theta_r-theta)+self.prev_theta_error)
-            self.Ui_theta_prev = self.Ui_theta
-
-
-
-        # calculate the psi integral gain
-        if np.abs(psi_dot) < 0.1:
-            self.Ui_psi = self.Ui_psi_prev + dt/2 *((self.psi_r-psi)+self.prev_psi_error)
-            self.Ui_psi_prev = self.Ui_psi
-
-
-
         ##################################
         # Implement your controller here
         #kp = 2.60416
-        #kd = 3.47222z
+        #kd = 3.47222
 
-        print('Ui theta')
-        print(self.Ui_theta)
-        F = kp_theta*(self.theta_r - theta) - kd_theta*theta_dot + ki_theta*self.Ui_theta+ Fe
+        # dirty derivative parameters
+        sigma = 0.05  # cutoff freq for dirty derivative
+        beta = (2.0*sigma-dt)/(2.0*sigma+dt)  # dirty derivative gain
+        theta_dot = 0.0
 
-        print('Ui psi')
-        print(self.Ui_psi)
-        phi_c = kp_psi*(self.psi_r-psi) - kd_psi*psi_dot + ki_psi*self.Ui_psi
+        theta_dot = beta*theta_dot + ((1-beta)/dt)*(theta - self.prev_theta)
 
 
-        tau = kp_phi*(phi_c-phi) - kd_phi*phi_dot
+
+        F = kp_theta*(self.theta_r - theta) - kd_theta*theta_dot + Fe
+
+        phi_c = kp_psi*(self.psi_r-psi) - kd_psi*(psi-self.prev_psi)/dt
+        tau = kp_phi*(phi_c-phi) - kd_phi*(phi-self.prev_phi)/dt
 
         left_force = .5*F + 1/(2*d)*tau
         right_force = .5*F - 1/(2*d)*tau
@@ -205,9 +179,6 @@ class Controller():
         self.prev_theta = theta
         self.prev_phi = phi
         self.prev_psi = psi
-        self.prev_theta_error = self.theta_r-theta
-        self.prev_psi_error = self.psi_r-psi
-        self.prev_phi_error = phi_c-phi
 
 
 if __name__ == '__main__':

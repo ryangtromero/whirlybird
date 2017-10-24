@@ -10,12 +10,12 @@ Jx: 0.0047
 Jy: 0.0014
 Jz: 0.0041
 km: 5.3
-t_r_theta: .8
-t_r_phi: .2
-t_r_psi: 1.2
-zeta_theta: .8
-zeta_phi: .8
-zeta_psi: 0.6
+t_r_theta: 1
+t_r_phi: .25
+t_r_psi: 2.5
+zeta_theta: 0.8
+zeta_phi: 1
+zeta_psi: 0.8
 sigma_gyro: 8.7266e-5
 sigma_pixel: 0.05
 theta_max: 0.785398
@@ -24,3 +24,5 @@ psi_max: 1.5708
 psi_min: -1.5708
 phi_max: 1.309
 phi_min: -1.309
+kitheta: 1
+kipsi: .5
