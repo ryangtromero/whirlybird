@@ -16,6 +16,7 @@ import numpy as np
 from whirlybird_msgs.msg import Command
 from whirlybird_msgs.msg import Whirlybird
 from std_msgs.msg import Float32
+from geometry_msgs.msg import Twist
 from numpy import *             # Grab all of the NumPy functions
 from matplotlib.pyplot import * # Grab MATLAB plotting functions
 from control.matlab import *    # MATLAB-like functions
@@ -87,7 +88,7 @@ class Controller():
 
         self.Fe = 0.0 #Note this is not the correct value for Fe, you will have to find that yourself
 
-        self.command_sub_ = rospy.Subscriber('whirlybird', Whirlybird, self.whirlybirdCallback, queue_size=5)
+        self.command_sub_ = rospy.Subscriber('x_hat', Twist, self.whirlybirdCallback, queue_size=5)
         self.psi_r_sub_ = rospy.Subscriber('psi_r', Float32, self.psiRCallback, queue_size=5)
         self.theta_r_sub_ = rospy.Subscriber('theta_r', Float32, self.thetaRCallback, queue_size=5)
         self.command_pub_ = rospy.Publisher('command', Command, queue_size=5)
@@ -124,9 +125,12 @@ class Controller():
         kd_phi = self.kd_phi
         kp_phi = self.kp_phi
 
-        phi = msg.roll
-        theta = msg.pitch
-        psi = msg.yaw
+        phi = msg.linear.z
+        phi_dot = msg.angular.y
+        theta = msg.linear.x
+        theta_dot = msg.linear.y
+        psi = msg.angular.x
+        psi_dot = msg.angular.z
 
         #Calculate yaw gains
         t_r_psi = self.t_r_psi
@@ -142,9 +146,6 @@ class Controller():
         dt = (now-self.prev_time).to_sec()
         self.prev_time = now
 
-        theta_dot = (theta-self.prev_theta)/dt
-        psi_dot = (psi-self.prev_psi)/dt
-        phi_dot = (phi-self.prev_phi)/dt
 
 
         #################################
@@ -206,9 +207,9 @@ class Controller():
         error_psi = self.psi_r - psi
         self.I_psi = self.I_psi + (dt/2)*(error_psi+self.prev_psi_error)
 
-        F = - K_long*x_long - self.I_theta*K_I_long + Fe 
+        F = - K_long*x_long - self.I_theta*K_I_long + Fe
 
-        tau =  - K_lat*x_lat - self.I_psi*K_I_lat
+        tau =  - K_lat*x_lat - self.I_psi*K_I_lat 
 
         left_force = .5*F + 1/(2*d)*tau
         right_force = .5*F - 1/(2*d)*tau

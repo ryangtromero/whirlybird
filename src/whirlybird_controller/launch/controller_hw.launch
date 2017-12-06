@@ -11,7 +11,8 @@
 
   <rosparam command="load" file="$(find whirlybird_sim)/param/whirlybird.yaml" ns="whirlybird" />
 
-  <node name="whirlybird_controller" pkg="whirlybird_controller" type = "controllerSS_Integrator.py" />	
+  <node name="whirlybird_controller" pkg="whirlybird_controller" type = "controllerSS_Integrator_observer.py" output="screen" />	
+  <node name="whirlybird_observer" pkg="whirlybird_controller" type = "Observer.py" output="screen"/>
 
 </launch>
 
